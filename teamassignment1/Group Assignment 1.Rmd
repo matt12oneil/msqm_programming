@@ -1,0 +1,43 @@
+---
+title: "Group Assignment 1"
+author: "YOUR NAMES HERE"
+date: "10/10/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse) # Don't forget to run "install.packages('tidyverse')"
+library(readxl) # Note: if this is not installed, remember you can install new packages using install.packages('readxl')
+```
+
+# World Happiness
+The World Happiness Report is a landmark survey of the state of global happiness that ranks 156 countries by how happy their citizens perceive themselves to be. 
+
+More Information: https://worldhappiness.report/ed/2022/
+
+Central to this survey is the "Life Evaluation" question. Life evaluation was measured by the individual answers to the Cantril ladder question: “Please imagine a ladder, with steps numbered from 0 at the bottom to 10 at the top. The top of the ladder represents the best possible life for you and the bottom of the ladder represents the worst possible life for you. On which step of the ladder would you say you personally feel you stand at this time?”
+
+
+## Reading the Data
+1) Read in all the data provided to create a single data frame with Happiness metrics for the years from 2005 - 2021. Describe any changes you had to make to combine these datasets effectively.
+
+```{r}
+
+# Reading the data for 2019... Can we write a for loop to make this faster? (ungraded)
+read_xlsx("Happiness_2019-2021.xlsx", sheet = as.character(2019))
+```
+
+## Initial Questions
+1) **Do Canada and the United States have common happy/unhappy years?** Filter the combined dataset to view Happiness and associated variables for the United States and Canada over all available years. Find the 3 happiest and unhappiest years for each country in the data provided. Do they seem to align with one another? Are there any key features that differ over the years you selected?
+
+2) How is happiness distributed by region? Summarize happiness by finding the average (mean), 25th percentile (quantile(x, .25)), and 75th percentile (quantile(x, .75))  by *region* for each year. 
+
+
+## Team-Generated Question
+Consult with your team to formulate a question similar to those in the previous questions. Explain in words how you can use the provided data to answer that question, then write code to format the data to answer the question. 
+
+
+

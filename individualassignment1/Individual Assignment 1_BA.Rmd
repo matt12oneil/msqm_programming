@@ -38,6 +38,7 @@ For example, the first entry in asset corresponds to the first entries in price_
 *Average Price Percentage Change*: The average percent change for each asset, measured week-over-week.
 
 ```{r}
+#get average price_pct_chg
 average_price_pct_chg <- mean(price_pct_chg)
 #display the average price percent change
 average_price_pct_chg
@@ -46,6 +47,7 @@ average_price_pct_chg
 *Average Trade Volume Percentage Change*: The average percent trade volume change for each asset, measured week-over-week.
 
 ```{r}
+#get average vol_pct_chg
 average_vol_pct_chg <- mean(vol_pct_chg)
 #display the average volume percent change
 average_vol_pct_chg
@@ -114,6 +116,11 @@ filtered_vol_pct_chg <- filter_func(input_vector = vol_pct_chg,
 length(filtered_price_pct_chg)
 #return the size of the vector for filtered_vol_pct_chg
 length(filtered_vol_pct_chg)
+
+#are the two vectors the same size?
+ifelse(length(filtered_price_pct_chg) == length(filtered_vol_pct_chg)
+       ,"Yes, the two vectors are the same size"
+       ,"No, the vectors are not the same size")
 ```
 ## TASK 3: Plot
 

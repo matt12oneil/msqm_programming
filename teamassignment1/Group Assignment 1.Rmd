@@ -10,7 +10,9 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse) # Don't forget to run "install.packages('tidyverse')"
-library(readxl) # Note: if this is not installed, remember you can install new packages using install.packages('readxl')
+library(readxl)
+library(janitor)
+# Note: if this is not installed, remember you can install new packages using install.packages('readxl')
 ```
 
 # World Happiness
@@ -27,7 +29,34 @@ Central to this survey is the "Life Evaluation" question. Life evaluation was me
 ```{r}
 
 # Reading the data for 2019... Can we write a for loop to make this faster? (ungraded)
-read_xlsx("Happiness_2019-2021.xlsx", sheet = as.character(2019))
+t1 <- read_xlsx("Happiness_2019-2023.xlsx") |>
+  janitor::clean_names()
+t2 <- read_csv("Happiness_2005-2018.csv") |>
+  #getting rid of column 12, unique to this file, so we can merge
+  select(-12) |>
+  janitor::clean_names()
+
+regions <- read_csv("Regions.csv") |>
+  janitor::clean_names()
+
+happiness <- t1 |>
+  #combine two datasets
+  bind_rows(t2) |>
+  #some country names aren't the same or don't exist in the region set
+  #mutate is changing the country names to align with regions set
+  mutate(country_name = case_when(country_name == 'Czechia' ~ 'Czech Republic'
+                                  ,country_name == 'North Macedonia' ~ 'Macedonia'
+                                  ,country_name == 'State of Palestine' ~ 'Palestinian Territories'
+                                  ,country_name == 'Türkiye' ~ 'Turkey'
+                                  ,country_name == 'Sudan' ~ 'South Sudan'
+                                  ,.default = country_name)) |>
+  #join with region names to add that to data
+  left_join(regions, join_by(country_name)) |>
+  filter(is.na(regional_indicator)) |>
+  distinct(country_name)
+
+#add region names for remaining countries without a region
+#can do question 1 without
 ```
 
 ## Initial Questions

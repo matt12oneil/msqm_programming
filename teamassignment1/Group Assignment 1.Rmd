@@ -1,7 +1,7 @@
 ---
 title: "Group Assignment 1"
 author: "YOUR NAMES HERE"
-date: "10/10/2022"
+date: "`r Sys.Date()`"
 output:
   pdf_document: default
   html_document: default
@@ -10,63 +10,104 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse) # Don't forget to run "install.packages('tidyverse')"
-library(readxl)
+library(readxl) # Note: if this is not installed, remember you can install new packages using install.packages('readxl')
 library(janitor)
-# Note: if this is not installed, remember you can install new packages using install.packages('readxl')
 ```
 
 # World Happiness
-The World Happiness Report is a landmark survey of the state of global happiness that ranks 156 countries by how happy their citizens perceive themselves to be. 
 
-More Information: https://worldhappiness.report/ed/2022/
+The World Happiness Report is a landmark survey of the state of global happiness that ranks 156 countries by how happy their citizens perceive themselves to be.
 
-Central to this survey is the "Life Evaluation" question. Life evaluation was measured by the individual answers to the Cantril ladder question: “Please imagine a ladder, with steps numbered from 0 at the bottom to 10 at the top. The top of the ladder represents the best possible life for you and the bottom of the ladder represents the worst possible life for you. On which step of the ladder would you say you personally feel you stand at this time?”
+More Information: <https://worldhappiness.report/ed/2025/> Central to this survey is the "Life Evaluation" question. Life evaluation was measured by the individual answers to the *Cantril ladder question*: “Please imagine a ladder, with steps numbered from 0 at the bottom to 10 at the top. The top of the ladder represents the best possible life for you and the bottom of the ladder represents the worst possible life for you. On which step of the ladder would you say you personally feel you stand at this time?”
 
+## Reading and Tidying the Data
 
-## Reading the Data
-1) Read in all the data provided to create a single data frame with Happiness metrics for the years from 2005 - 2021. Describe any changes you had to make to combine these datasets effectively.
+1)  Read in all the data provided to for the years from 2014 - 2024 from the provided excel spreadsheet.
+  a)  Ensure that the columns of this data frame comply with tidyverse naming conventions.
+  b)  Remove columns that we will not be using for the following analysis: *upperwhisker*, *lowerwhisker*, *Dystopia + Residual*
+  c)  Check your data for completeness. Count up the number of rows for each country and remove countries that are incomplete (i.e. missing one or more years). Which countries were removed (if any) and how might this impact your analysis?
+  d)  Order the dataset by country and year in ascending order.
 
 ```{r}
+# Reading the data
+happiness <- read_xlsx("Happiness_2014-2024.xlsx") |>
+  janitor::clean_names() |>
+  rename(lower_whisker = lowerwhisker, upper_whisker = upperwhisker) |>
+  select(-c(lower_whisker, upper_whisker, dystopia_residual))
 
-# Reading the data for 2019... Can we write a for loop to make this faster? (ungraded)
-t1 <- read_xlsx("Happiness_2019-2023.xlsx") |>
-  janitor::clean_names()
-t2 <- read_csv("Happiness_2005-2018.csv") |>
-  #getting rid of column 12, unique to this file, so we can merge
-  select(-12) |>
-  janitor::clean_names()
+#have to think ab why specific countries are problems
+#37 total
+#generally, less confidence bc less data, (less govt stability?)
+#gives you a sturdier baseline for all the countries
+incomplete <- happiness |>
+  group_by(country_name) |>
+  summarize(year_count = n()) |>
+  filter(year_count < 11) |>
+  select(country_name)
+  
+clean <- happiness |>
+  anti_join(incomplete, by = join_by(country_name)) |>
+  arrange(country_name, year)
+  
 
-regions <- read_csv("Regions.csv") |>
-  janitor::clean_names()
-
-happiness <- t1 |>
-  #combine two datasets
-  bind_rows(t2) |>
-  #some country names aren't the same or don't exist in the region set
-  #mutate is changing the country names to align with regions set
-  mutate(country_name = case_when(country_name == 'Czechia' ~ 'Czech Republic'
-                                  ,country_name == 'North Macedonia' ~ 'Macedonia'
-                                  ,country_name == 'State of Palestine' ~ 'Palestinian Territories'
-                                  ,country_name == 'Türkiye' ~ 'Turkey'
-                                  ,country_name == 'Sudan' ~ 'South Sudan'
-                                  ,.default = country_name)) |>
-  #join with region names to add that to data
-  left_join(regions, join_by(country_name)) |>
-  filter(is.na(regional_indicator)) |>
-  distinct(country_name)
-
-#add region names for remaining countries without a region
-#can do question 1 without
 ```
 
-## Initial Questions
-1) **Do Canada and the United States have common happy/unhappy years?** Filter the combined dataset to view Happiness and associated variables for the United States and Canada over all available years. Find the 3 happiest and unhappiest years for each country in the data provided. Do they seem to align with one another? Are there any key features that differ over the years you selected?
+## Questions
 
-2) How is happiness distributed by region? Summarize happiness by finding the average (mean), 25th percentile (quantile(x, .25)), and 75th percentile (quantile(x, .75))  by *region* for each year. 
+1)  **What are the happiest years across all countries?**
+  a)  Find the happiest year for each country. Then, count up the occurrence of these happiest years to see how many countries share the same happiest years. What are the most common happiest years?
+  b)  How does this align with average happiness by year across all countries in the dataset? What does this tell you about happiness trends overall?
+  c) Compare these two lists of years to one another. Are there any that stand out?
+  
+```{r}
+first_a <- clean |>
+  group_by(country_name) |>
+  arrange(desc(ladder_score)) |>
+  slice_head(n = 1) |>
+  ungroup() |>
+  group_by(year) |>
+  summarize(instances = n()) |>
+  arrange(desc(instances), year) |>
+  mutate(instances_rank = row_number())
+
+first_b <- clean |>
+  group_by(year) |>
+  summarize(avg_happiness = mean(ladder_score)) |>
+  arrange(desc(avg_happiness)) |>
+  mutate(avg_rank = row_number())
+
+first_c <- first_a |>
+  inner_join(first_b, by = join_by(year))
+  
+```
 
 
-## Team-Generated Question
-Consult with your team to formulate a question similar to those in the previous questions. Explain in words how you can use the provided data to answer that question, then write code to format the data to answer the question. 
+2)  **Which countries have seen the largest increase in overall happiness?**
+  a) Find the 10 countries with the largest *positive* change over the 10 year period (i.e. the largest increase between their earliest and latest observation).
+  b) Additionally, which countries experienced the largest year-over-year increase in happiness?
+  c) Compare these two lists of countries to one another. Is there overlap between them?
 
+```{r}
+second_a <- clean |>
+  filter(year %in% c(2014,2024)) |>
+  select(country_name, year, ladder_score) |>
+  pivot_wider(names_from = year, names_prefix = 'year_', values_from = ladder_score) |>
+  mutate(ten_year_delta = year_2024 - year_2014) |>
+  arrange(desc(ten_year_delta)) |>
+  head(10)
 
+#all years or just the year 2024
+
+second_b <- clean |>
+  filter(year %in% c(2023,2024)) |>
+  select(country_name, year, ladder_score) |>
+  pivot_wider(names_from = year, names_prefix = 'year_', values_from = ladder_score) |>
+  mutate(yoy_delta = year_2024 - year_2023) |>
+  arrange(desc(yoy_delta)) |>
+  head(10)
+
+second_c <- second_a |>
+  inner_join(second_b, by = join_by(country_name)) |>
+  select(country_name)
+```
 
